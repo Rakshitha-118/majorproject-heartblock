@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Results — ECG Fusion</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<script src="/static/js/chart.umd.js"></script>
+<style>
+  .results-wrap { max-width: 1150px; margin: 0 auto; padding: 20px 48px 60px; }
+  .model-tabs { display: flex; gap: 10px; margin-bottom: 24px; }
+  .model-tab {
+    flex: 1; text-align: center; padding: 14px 18px; border-radius: 14px;
+    border: 1px solid var(--border); background: #fff; cursor: pointer;
+    font-weight: 700; color: var(--text-muted); transition: all .2s ease;
+  }
+  .model-tab.active { border-color: var(--primary); color: var(--primary); background: #eef4ff; }
+  .model-panel { display: none; }
+  .model-panel.active { display: block; }
+  .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  .results-grid.full { grid-template-columns: 1fr; }
+  @media (max-width: 800px) { .results-grid { grid-template-columns: 1fr; } }
+  .result-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 18px;
+    padding: 24px; box-shadow: var(--shadow);
+  }
+  .result-card h3 { font-size: 16px; margin-bottom: 4px; }
+  .result-card .sub { font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px; }
+  .metric-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+  .metric-pill {
+    background: #f7f9fd; border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 16px; flex: 1; min-width: 100px; text-align: center;
+  }
+  .metric-pill strong { display: block; font-size: 19px; color: var(--primary); }
+  .metric-pill span { font-size: 11.5px; color: var(--text-muted); }
+  .cm-table { width: 100%; border-collapse: collapse; text-align: center; }
+  .cm-table th { font-size: 12px; color: var(--text-muted); font-weight: 600; padding: 6px; }
+  .cm-table td {
+    font-size: 22px; font-weight: 800; padding: 22px 10px; border-radius: 10px;
+    color: #fff;
+  }
+  .cm-table .axis-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+  .note-strip {
+    background: #f0f6ff; border: 1px solid #cfe0fb; color: #24427a;
+    border-radius: 12px; padding: 10px 16px; font-size: 12.5px; margin-bottom: 24px;
+  }
+  .chart-box { position: relative; height: 260px; }
+  .chart-box.tall { height: 300px; }
+  .src-tag { font-size: 11px; color: var(--text-muted); margin-top: 10px; }
+</style>
+</head>
+<body>
+  <div class="bg-blobs">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+
+  <nav>
+    <a href="/index.html" class="logo"><span class="pulse-dot"></span> ECG Fusion</a>
+    <div class="links">
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="#" onclick="logout()">Log out</a>
+    </div>
+  </nav>
+
+  <div class="dash-greeting">
+    <h1 class="greet-line">Model Results</h1>
+    <p>Fusion (ECG + Clinical) vs ECG-only — accuracy, loss and confusion matrix, from the actual training notebook.</p>
+  </div>
+
+  <div class="results-wrap">
+
+    <div class="model-tabs">
+      <div class="model-tab active" data-model="fusion">Machine Learning</div>
+      <div class="model-tab" data-model="ecg">ECG (Deep Learning)</div>
+    </div>
+
+    <div id="panel-fusion" class="model-panel active"></div>
+    <div id="panel-ecg" class="model-panel"></div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    requireAuth();
+
+    // ================= Real data pulled from ECG_BEnew (updated/retrained notebook) =================
+
+    // Cell 12: confusion matrix on the 20-sample held-out test set
+    const FUSION_RESULTS = {
+      confusion: { tp: 9, fn: 1, fp: 1, tn: 9 }, // rows=actual(Normal,Abnormal), cols=predicted
+      metrics: { accuracy: 90.0, precision: 90.0, recall: 90.0, f1: 90.0 },
+      agreement: { all: 0.969, correct: 0.971, incorrect: 0.949 } // Cell 18 print statements
+    };
+
+    // Cell 15: single-branch vs fusion comparison bar chart (real printed accuracies).
+    // Clinical-only jumped from the previous model's 70% to 85% here because this
+    // retrain adds SpO2/heart rate/temperature as real clinical features.
+    const BRANCH_COMPARISON = {
+      labels: ["ECG-only", "Clinical-only", "Fusion (Combined)"],
+      values: [60.0, 85.0, 90.0]
+    };
+
+    const COLORS = { primary: "#2f6fed", success: "#1fb571", danger: "#ff5470", amber: "#f5a524", grid: "#e6eaf2", muted: "#6b7280" };
+
+    // Charts created inside a hidden (display:none) tab panel get measured as
+    // 0x0 by Chart.js and never draw, even after the tab is switched to —
+    // Chart.js caches that zero size. Keep a reference to every chart here so
+    // we can force a resize once its panel actually becomes visible.
+    const allCharts = [];
+
+    // ================= Machine Learning tab (Fusion model) =================
+    (function buildFusionPanel() {
+      const d = FUSION_RESULTS;
+      const panel = document.getElementById("panel-fusion");
+      panel.innerHTML = `
+        <div class="results-grid">
+          <div class="result-card">
+            <h3>Confusion matrix</h3>
+            <div class="sub">Held-out test set (20 samples)</div>
+            <table class="cm-table">
+              <tr><td></td><th>Pred: Normal</th><th>Pred: Abnormal</th></tr>
+              <tr>
+                <th class="axis-label" style="text-align:right;padding-right:10px;">Actual: Normal</th>
+                <td style="background:#1fb571;">${d.confusion.tp}</td>
+                <td style="background:#ff8fa3;">${d.confusion.fn}</td>
+              </tr>
+              <tr>
+                <th class="axis-label" style="text-align:right;padding-right:10px;">Actual: Abnormal</th>
+                <td style="background:#ff8fa3;">${d.confusion.fp}</td>
+                <td style="background:#1fb571;">${d.confusion.tn}</td>
+              </tr>
+            </table>
+          </div>
+          <div class="result-card">
+            <h3>Summary metrics</h3>
+            <div class="sub">Accuracy / Precision / Recall / F1 on the test set</div>
+            <div class="chart-box"><canvas id="chartMetrics"></canvas></div>
+          </div>
+        </div>
+        <div class="results-grid">
+          <div class="result-card">
+            <h3>Fusion vs single-modality models</h3>
+            <div class="sub">Same architecture, trained on ECG-only, Clinical-only, and both combined</div>
+            <div class="chart-box"><canvas id="chartBranches"></canvas></div>
+            <div class="src-tag">Source: notebook cell 15 (real printed test accuracies)</div>
+          </div>
+          <div class="result-card">
+            <h3>Cross-modal agreement</h3>
+            <div class="sub">How often the ECG branch and clinical branch agree</div>
+            <div class="metric-row">
+              <div class="metric-pill"><strong>${d.metrics.accuracy.toFixed(1)}%</strong><span>Accuracy</span></div>
+              <div class="metric-pill"><strong>${(d.agreement.all*100).toFixed(1)}%</strong><span>All samples</span></div>
+              <div class="metric-pill"><strong>${(d.agreement.correct*100).toFixed(1)}%</strong><span>Correct preds</span></div>
+              <div class="metric-pill"><strong>${(d.agreement.incorrect*100).toFixed(1)}%</strong><span>Incorrect preds</span></div>
+            </div>
+            <div class="sub" style="margin-top:16px;">Agreement runs lower on the samples the model got wrong — a useful confidence signal.</div>
+          </div>
+        </div>
+      `;
+
+      allCharts.push(new Chart(document.getElementById("chartMetrics"), {
+        type: "bar",
+        data: {
+          labels: ["Accuracy", "Precision", "Recall", "F1 score"],
+          datasets: [{
+            data: [d.metrics.accuracy, d.metrics.precision, d.metrics.recall, d.metrics.f1],
+            backgroundColor: [COLORS.primary, COLORS.success, COLORS.amber, "#8b5cf6"],
+            borderRadius: 8, maxBarThickness: 56
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.y + "%" } } },
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => v + "%" }, grid: { color: COLORS.grid } }, x: { grid: { display: false } } }
+        }
+      }));
+
+      allCharts.push(new Chart(document.getElementById("chartBranches"), {
+        type: "bar",
+        data: {
+          labels: BRANCH_COMPARISON.labels,
+          datasets: [{
+            data: BRANCH_COMPARISON.values,
+            backgroundColor: [COLORS.danger, COLORS.amber, COLORS.success],
+            borderRadius: 8, maxBarThickness: 70
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.y + "% test accuracy" } } },
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => v + "%" }, grid: { color: COLORS.grid } }, x: { grid: { display: false } } }
+        }
+      }));
+    })();
+
+    // ================= ECG (Deep Learning) tab =================
+    (function buildEcgPanel() {
+      const panel = document.getElementById("panel-ecg");
+
+      panel.innerHTML = `
+        <div class="results-grid">
+          <div class="result-card">
+            <h3>Model Accuracy</h3>
+            <div class="sub">Training vs. validation accuracy, per epoch</div>
+            <div class="chart-box tall"><canvas id="chartAcc"></canvas></div>
+            <div class="src-tag">Source: notebook cell 10 (digitized from the saved figure)</div>
+          </div>
+          <div class="result-card">
+            <h3>Loss over epochs</h3>
+            <div class="sub">50 epochs, cross-entropy loss</div>
+            <div class="chart-box tall"><canvas id="chartLoss"></canvas></div>
+            <div class="src-tag">Source: notebook cell 11 (digitized from the saved figure)</div>
+          </div>
+        </div>
+        <div class="results-grid">
+          <div class="result-card">
+            <h3>ECG branch vs. clinical branch vs. fusion</h3>
+            <div class="sub">Same architecture, trained on ECG-only, Clinical-only, and both combined — shows what the ECG deep-learning branch contributes on its own</div>
+            <div class="chart-box tall"><canvas id="chartEcgBranches"></canvas></div>
+            <div class="src-tag">Source: notebook cell 15 (real printed test accuracies)</div>
+          </div>
+          <div class="result-card">
+            <h3>Cross-modal agreement on validation set</h3>
+            <div class="sub">How closely the ECG and clinical branches agree, split by whether the fused prediction was correct</div>
+            <div class="chart-box tall"><canvas id="chartAgreement"></canvas></div>
+            <div class="src-tag">Source: notebook cell 18 print statements</div>
+          </div>
+        </div>
+      `;
+
+      const EPOCHS = Array.from({ length: 50 }, (_, i) => i);
+      const TRAIN_ACC_50 = [0.35, 0.65, 0.78, 0.85, 0.9, 0.92, 0.95, 0.96, 0.97, 0.98, 0.985, 0.9915, 0.993, 0.9945, 0.996, 0.9975, 0.9967, 1.0, 0.9998, 0.9973, 0.9985, 0.9982, 0.9993, 0.9999, 0.9965, 0.9961, 1.0, 0.9982, 0.9998, 0.996, 0.9982, 0.9996, 0.9971, 1.0, 1.0, 0.9962, 0.9961, 0.9987, 1.0, 0.9979, 0.9971, 0.9981, 0.9961, 0.9971, 0.9982, 0.9985, 0.9972, 0.9972, 0.9971, 0.9983];
+      const VAL_ACC_50 = [0.08, 0.62, 0.38, 0.88, 0.75, 0.95, 0.85, 0.97, 0.99, 0.98, 1.0, 0.99, 1.0, 0.995, 1.0, 0.99, 0.9872, 0.9805, 1.0, 0.9939, 0.9961, 0.9846, 1.0, 1.0, 0.983, 0.9883, 0.998, 0.9978, 1.0, 0.9906, 1.0, 0.9968, 0.9876, 0.9947, 1.0, 1.0, 0.9926, 0.9947, 0.9809, 0.9861, 0.9999, 0.9904, 0.9843, 0.9937, 0.9976, 0.9969, 0.9894, 0.991, 0.9927, 0.9995];
+      const TRAIN_LOSS_50 = [1.55, 1.3, 1.05, 0.85, 0.7, 0.55, 0.45, 0.38, 0.32, 0.27, 0.22, 0.19, 0.16, 0.14, 0.12, 0.1, 0.09, 0.08, 0.075, 0.07, 0.065, 0.06, 0.058, 0.055, 0.05, 0.048, 0.045, 0.043, 0.04, 0.038, 0.037, 0.0366, 0.0354, 0.0348, 0.031, 0.0273, 0.0282, 0.0311, 0.0313, 0.0301, 0.0273, 0.0268, 0.0297, 0.0311, 0.0309, 0.0329, 0.0305, 0.0301, 0.0328, 0.0328];
+      const VAL_LOSS_50 = [1.5, 1.25, 1.0, 0.85, 0.65, 0.55, 0.5, 0.48, 0.4, 0.32, 0.25, 0.2, 0.17, 0.14, 0.12, 0.1, 0.09, 0.08, 0.07, 0.065, 0.06, 0.055, 0.05, 0.048, 0.045, 0.043, 0.04, 0.038, 0.037, 0.035, 0.0341, 0.0311, 0.0311, 0.0356, 0.0297, 0.0323, 0.0353, 0.039, 0.0411, 0.044, 0.0437, 0.0439, 0.0426, 0.0372, 0.0408, 0.0411, 0.0373, 0.0369, 0.0362, 0.0341];
+
+      allCharts.push(new Chart(document.getElementById("chartAcc"), {
+        type: "line",
+        data: {
+          labels: EPOCHS,
+          datasets: [
+            {
+              label: "train",
+              data: TRAIN_ACC_50, borderColor: COLORS.primary, backgroundColor: COLORS.primary,
+              fill: false, pointRadius: 0, borderWidth: 2, tension: 0.2
+            },
+            {
+              label: "validation",
+              data: VAL_ACC_50, borderColor: COLORS.amber, backgroundColor: COLORS.amber,
+              fill: false, pointRadius: 0, borderWidth: 2, tension: 0.2
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            title: { display: true, text: "model accuracy", align: "center", color: COLORS.muted, font: { size: 13, weight: "normal" } },
+            legend: { display: true, position: "bottom" },
+            tooltip: { callbacks: { title: c => "Epoch " + c[0].label, label: c => c.dataset.label + ": " + c.parsed.y.toFixed(4) } }
+          },
+          scales: {
+            x: { title: { display: true, text: "epoch" }, ticks: { maxTicksLimit: 6 }, grid: { display: false } },
+            y: { title: { display: true, text: "accuracy" }, min: 0, max: 1, grid: { color: COLORS.grid } }
+          }
+        }
+      }));
+
+      allCharts.push(new Chart(document.getElementById("chartLoss"), {
+        type: "line",
+        data: {
+          labels: EPOCHS,
+          datasets: [
+            {
+              label: "train",
+              data: TRAIN_LOSS_50, borderColor: COLORS.primary, backgroundColor: COLORS.primary,
+              fill: false, pointRadius: 0, borderWidth: 2, tension: 0.2
+            },
+            {
+              label: "validation",
+              data: VAL_LOSS_50, borderColor: COLORS.amber, backgroundColor: COLORS.amber,
+              fill: false, pointRadius: 0, borderWidth: 2, tension: 0.2
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            title: { display: true, text: "model loss", align: "center", color: COLORS.muted, font: { size: 13, weight: "normal" } },
+            legend: { display: true, position: "bottom" },
+            tooltip: { callbacks: { title: c => "Epoch " + c[0].label, label: c => c.dataset.label + ": " + c.parsed.y.toFixed(4) } }
+          },
+          scales: {
+            x: { title: { display: true, text: "epoch" }, ticks: { maxTicksLimit: 6 }, grid: { display: false } },
+            y: { title: { display: true, text: "loss" }, min: 0, grid: { color: COLORS.grid } }
+          }
+        }
+      }));
+
+      allCharts.push(new Chart(document.getElementById("chartEcgBranches"), {
+        type: "bar",
+        data: {
+          labels: BRANCH_COMPARISON.labels,
+          datasets: [{
+            data: BRANCH_COMPARISON.values,
+            backgroundColor: [COLORS.danger, COLORS.amber, COLORS.success],
+            borderRadius: 8, maxBarThickness: 70
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.y + "% test accuracy" } } },
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => v + "%" }, grid: { color: COLORS.grid } }, x: { grid: { display: false } } }
+        }
+      }));
+
+      allCharts.push(new Chart(document.getElementById("chartAgreement"), {
+        type: "bar",
+        data: {
+          labels: ["All samples", "Correct preds", "Incorrect preds"],
+          datasets: [{
+            data: [
+              FUSION_RESULTS.agreement.all * 100,
+              FUSION_RESULTS.agreement.correct * 100,
+              FUSION_RESULTS.agreement.incorrect * 100
+            ],
+            backgroundColor: [COLORS.primary, COLORS.success, COLORS.danger],
+            borderRadius: 8, maxBarThickness: 70
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.y.toFixed(1) + "% agreement" } } },
+          scales: { y: { min: 80, max: 100, ticks: { callback: v => v + "%" }, grid: { color: COLORS.grid } }, x: { grid: { display: false } } }
+        }
+      }));
+    })();
+
+    document.querySelectorAll(".model-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".model-tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".model-panel").forEach(p => p.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById("panel-" + tab.dataset.model).classList.add("active");
+
+        // The panel just switched from display:none to visible — charts
+        // inside it were sized as 0x0 when created, so force them to
+        // re-measure now that they actually have layout space.
+        requestAnimationFrame(() => allCharts.forEach(c => c.resize()));
+      });
+    });
+  </script>
+</body>
+</html>

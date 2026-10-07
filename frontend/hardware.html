@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Vitals Check — ECG Fusion</title>
+
+  <link
+    rel="stylesheet"
+    href="/static/css/style.css"
+  >
+
+  <script src="/static/js/chart.umd.js"></script>
+
+  <style>
+
+    /* ======================================================
+       HARDWARE CONNECTION ROW
+    ====================================================== */
+
+    .auto-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .auto-row select {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 2px solid var(--border, #e5e7eb);
+      font-size: 14px;
+      background: #fff;
+    }
+
+    .auto-status {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .auto-status.connected {
+      color: #1fb571;
+      font-weight: 600;
+    }
+
+    .auto-status.error {
+      color: #e0445b;
+    }
+
+    .hw-note {
+      font-size: 13px;
+      color: #6b7280;
+      margin: -6px 0 18px;
+    }
+
+
+    /* ======================================================
+       LIVE SENSOR READINGS
+    ====================================================== */
+
+    .live-readouts {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .readout {
+      flex: 1;
+      min-width: 130px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    .readout.calculating {
+      opacity: 0.55;
+    }
+
+    .r-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .r-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text, #111827);
+    }
+
+    .r-value .r-unit {
+      font-size: 13px;
+      font-weight: 600;
+      color: #9ca3af;
+      margin-left: 4px;
+    }
+
+
+    /* ======================================================
+       ECG CAPTURE STATUS
+       (no live chart - the waveform is only shown after
+       Run Fusion Analysis, loaded from the saved .dat file)
+    ====================================================== */
+
+    .ecg-status {
+      border: 2px solid var(--border, #e5e7eb);
+      border-radius: 14px;
+      background: #f8fafc;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .ecg-status-text {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #6b7280;
+    }
+
+    .ecg-status-text.ready {
+      color: #12875a;
+    }
+
+    .ecg-file-note {
+      font-size: 12.5px;
+      color: #6b7280;
+      margin: 8px 2px 0;
+      min-height: 16px;
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+
+  <!-- ======================================================
+       BACKGROUND
+  ====================================================== -->
+
+  <div class="bg-blobs">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+
+
+  <!-- ======================================================
+       NAVIGATION
+  ====================================================== -->
+
+  <nav>
+
+    <a
+      href="/index.html"
+      class="logo"
+    >
+      <span class="pulse-dot"></span>
+      ECG Fusion
+    </a>
+
+
+    <div class="links">
+
+      <a href="/dashboard.html">
+        &larr; Dashboard
+      </a>
+
+      <a
+        href="#"
+        onclick="logout()"
+      >
+        Log out
+      </a>
+
+    </div>
+
+  </nav>
+
+
+  <!-- ======================================================
+       MAIN SECTION
+  ====================================================== -->
+
+  <div
+    class="section"
+    style="padding-top:20px;"
+  >
+
+
+    <!-- ====================================================
+         HEADER
+    ===================================================== -->
+
+    <div class="form-header">
+
+      <h1 class="form-header-title">
+
+
+        <!-- ECG Icon -->
+
+        <svg
+          width="30"
+          height="30"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="#2f6fed"
+            stroke-width="1.3"
+            opacity="0.3"
+          />
+
+          <path
+            d="M3 12h3.5l1.8-5 3.2 10 2.4-10 1.8 5h3.3"
+            stroke="#2f6fed"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="live-pulse-path"
+          />
+
+        </svg>
+
+
+        Live Vitals Check
+
+      </h1>
+
+
+      <p>
+        Connect your Arduino to collect Heart Rate,
+        Temperature and SpO₂ automatically. The first 10 ECG
+        readings (about 10 seconds) are captured in the
+        background and saved to disk - click Run Fusion
+        Analysis once they're ready to see the waveform and
+        your result.
+      </p>
+
+    </div>
+
+
+    <!-- ====================================================
+         HARDWARE CARD
+    ===================================================== -->
+
+    <div class="form-card">
+
+
+      <!-- ==================================================
+           ARDUINO CONNECTION CONTROLS
+      =================================================== -->
+
+      <div class="auto-row">
+
+
+        <!-- COM Port -->
+
+        <select id="port-select">
+
+          <option value="">
+            Select COM port
+          </option>
+
+        </select>
+
+
+        <!-- Refresh -->
+
+        <button
+          type="button"
+          class="btn btn-outline"
+          id="refresh-ports-btn"
+        >
+          Refresh ports
+        </button>
+
+
+        <!-- Connect -->
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="connect-btn"
+        >
+          Connect device
+        </button>
+
+
+        <!-- Disconnect -->
+
+        <button
+          type="button"
+          class="btn btn-outline"
+          id="disconnect-btn"
+          disabled
+        >
+          Disconnect
+        </button>
+
+
+        <!-- Status -->
+
+        <span
+          class="auto-status"
+          id="auto-status"
+        >
+          Not connected
+        </span>
+
+
+      </div>
+
+
+      <!-- ==================================================
+           HARDWARE INFORMATION
+      =================================================== -->
+
+      <p class="hw-note">
+        Heartbeat fills Heart Rate,
+        Temperature is displayed in °C,
+        and SpO₂ updates live from the device.
+      </p>
+
+
+      <!-- ==================================================
+           LIVE SENSOR READINGS
+      =================================================== -->
+
+      <div class="live-readouts">
+
+
+        <!-- Heart Rate -->
+
+        <div
+          class="readout"
+          id="readout-heartbeat"
+        >
+
+          <div class="r-label">
+            Heart Rate
+          </div>
+
+          <div
+            class="r-value"
+            id="v-heartbeat"
+          >
+            --
+            <span class="r-unit">
+              bpm
+            </span>
+          </div>
+
+        </div>
+
+
+        <!-- Temperature -->
+
+        <div
+          class="readout"
+          id="readout-temperature"
+        >
+
+          <div class="r-label">
+            Temperature
+          </div>
+
+          <div
+            class="r-value"
+            id="v-temperature"
+          >
+            --
+            <span class="r-unit">
+              &deg;C
+            </span>
+          </div>
+
+        </div>
+
+
+        <!-- SpO2 -->
+
+        <div
+          class="readout"
+          id="readout-spo2"
+        >
+
+          <div class="r-label">
+            SpO₂
+          </div>
+
+          <div
+            class="r-value"
+            id="v-spo2"
+          >
+            --
+            <span class="r-unit">
+              %
+            </span>
+          </div>
+
+        </div>
+
+
+      </div>
+
+
+      <!-- ==================================================
+           HARDWARE + ECG FORM
+      =================================================== -->
+
+      <form
+        id="hardware-form"
+        onsubmit="handleHardwareCheck(event)"
+      >
+
+
+        <div class="form-grid">
+
+
+          <!-- ==============================================
+               HIDDEN HARDWARE VALUES
+          =============================================== -->
+
+          <input
+            type="hidden"
+            name="spo2"
+          >
+
+          <input
+            type="hidden"
+            name="heart_rate"
+          >
+
+          <!-- Temperature is stored in Celsius -->
+          <input
+            type="hidden"
+            name="temperature"
+          >
+
+
+          <!-- ==============================================
+               ECG CAPTURE STATUS
+               No live chart here - the first 10 readings are
+               captured in the background and saved to a .dat
+               file. The waveform itself is only shown after
+               Run Fusion Analysis, loaded from that file.
+          =============================================== -->
+
+          <div class="field full">
+
+
+            <label>
+              ECG Capture
+              (a real 10-second raw capture, taken when you click
+              "Run Fusion Analysis" - waveform shown in the
+              results below)
+            </label>
+
+
+            <div class="ecg-status">
+
+              <span
+                class="ecg-status-text"
+                id="ecg-progress"
+              >
+                Waiting for device&hellip;
+              </span>
+
+            </div>
+
+            <p
+              class="ecg-file-note"
+              id="ecg-file-note"
+            ></p>
+
+
+          </div>
+
+
+        </div>
+
+
+        <!-- ================================================
+             RUN CHECK
+        ================================================= -->
+
+        <button
+          type="submit"
+          class="btn btn-primary btn-block"
+          style="margin-top:10px;"
+        >
+          Run Fusion Analysis
+        </button>
+
+
+      </form>
+
+
+      <!-- ==================================================
+           RESULTS
+      =================================================== -->
+
+      <div
+        id="result-box"
+        class="result-box"
+      ></div>
+
+
+    </div>
+
+  </div>
+
+
+  <!-- ======================================================
+       MAIN JAVASCRIPT
+  ======================================================= -->
+
+  <script src="/static/js/app.js"></script>
+
+
+  <!-- ======================================================
+       AUTHENTICATION
+  ======================================================= -->
+
+  <script>
+
+    requireAuth();
+
+  </script>
+
+
+  <!-- ======================================================
+       HARDWARE SERIAL JAVASCRIPT
+  ======================================================= -->
+
+  <script src="/static/js/hardware-serial.js"></script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Dashboard — ECG Fusion</title>
+
+  <link rel="stylesheet" href="/static/css/style.css">
+
+  <style>
+    /* Recent Checks button */
+    .recent-checks-btn {
+      display: block;
+      margin: 30px auto 0;
+      padding: 13px 28px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #2f6fed, #6c63ff);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(47, 111, 237, 0.22);
+      transition: all 0.2s ease;
+    }
+
+    .recent-checks-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(47, 111, 237, 0.30);
+    }
+
+    .recent-checks-btn:active {
+      transform: translateY(0);
+    }
+
+    .recent-checks-wrapper {
+      margin-top: 25px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Animated background -->
+  <div class="bg-blobs">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+
+
+  <!-- Navbar -->
+  <nav>
+
+    <a href="/index.html" class="logo">
+      <span class="pulse-dot"></span>
+      ECG Fusion
+    </a>
+
+    <div class="links">
+
+      <a href="/dashboard.html">
+        Dashboard
+      </a>
+
+      <a href="/model-results.html">
+        Model Results
+      </a>
+
+      <a href="#" onclick="logout(); return false;">
+        Log out
+      </a>
+
+    </div>
+
+  </nav>
+
+
+  <!-- Greeting -->
+  <div class="dash-greeting">
+
+    <h1 class="greet-line">
+
+      Hi,
+
+      <span id="greet-name"></span>
+
+      <svg
+        class="greet-pulse"
+        width="70"
+        height="28"
+        viewBox="0 0 140 40"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+
+        <polyline
+          points="0,20 30,20 38,4 46,34 54,20 90,20 98,8 106,32 114,20 140,20"
+          fill="none"
+          stroke="#ff5470"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+
+      </svg>
+
+    </h1>
+
+    <p>
+      Choose how you'd like to check heart health today.
+    </p>
+
+  </div>
+
+
+  <!-- Main Options -->
+  <section class="section grid-2">
+
+
+    <!-- Hardware Option -->
+    <a
+      href="/hardware.html"
+      class="option-card hw"
+    >
+
+      <div class="icon icon-pulse">
+
+        <svg
+          width="30"
+          height="30"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+
+          <circle
+            cx="12"
+            cy="12"
+            r="9.5"
+            stroke="#2f6fed"
+            stroke-width="1.4"
+            opacity="0.35"
+          />
+
+          <path
+            d="M3 12h3.2l1.6-4.5L11.2 17l2.2-9 1.6 4h3"
+            stroke="#2f6fed"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+
+        </svg>
+
+      </div>
+
+
+      <span class="badge">
+        Quick · ~10 sec
+      </span>
+
+
+      <h3>
+        1. Hardware
+      </h3>
+
+
+      <p>
+        Read SpO₂, Heart Rate and Temperature from the connected device for a quick health check.
+      </p>
+
+    </a>
+
+
+    <!-- Fusion Analysis Option -->
+    <a
+      href="/enter-data.html"
+      class="option-card data"
+    >
+
+      <div class="icon icon-fusion">
+
+        <svg
+          width="30"
+          height="30"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+
+          <path
+            d="M12 20.5s-7.2-4.4-9.6-9C1 8 2.7 4.7 6 4.2c1.9-.3 3.4.6 6 3 2.6-2.4 4.1-3.3 6-3 3.3.5 5 3.8 3.6 7.3-2.4 4.6-9.6 9-9.6 9z"
+            stroke="#e0527a"
+            stroke-width="1.6"
+            stroke-linejoin="round"
+            opacity="0.9"
+          />
+
+          <circle
+            cx="7"
+            cy="9"
+            r="1.3"
+            fill="#e0527a"
+          />
+
+          <circle
+            cx="17"
+            cy="9"
+            r="1.3"
+            fill="#e0527a"
+          />
+
+          <circle
+            cx="12"
+            cy="15"
+            r="1.3"
+            fill="#e0527a"
+          />
+
+          <path
+            d="M7 9l5 6 5-6"
+            stroke="#e0527a"
+            stroke-width="1.2"
+            stroke-linecap="round"
+          />
+
+        </svg>
+
+      </div>
+
+
+      <span class="badge">
+        Fusion Analysis
+      </span>
+
+
+      <h3>
+        2. Enter Data
+      </h3>
+
+
+      <p>
+        Enter SpO₂, Heart Rate and Temperature, then upload an ECG signal for fusion-model analysis.
+      </p>
+
+    </a>
+
+  </section>
+
+
+  <!-- Recent Checks Button -->
+  <button
+    type="button"
+    id="recent-checks-btn"
+    class="recent-checks-btn"
+    aria-expanded="false"
+    aria-controls="recent-checks-wrapper"
+  >
+    Recent Checks
+  </button>
+
+
+  <!-- Recent Checks Section -->
+  <section
+    id="recent-checks-wrapper"
+    class="recent-checks-wrapper"
+    hidden
+  >
+
+    <div
+      class="dash-greeting"
+      style="margin-top:20px;"
+    >
+
+      <h1
+        style="font-size:20px;"
+      >
+        Recent checks
+      </h1>
+
+    </div>
+
+
+    <!-- Prediction History -->
+    <div
+      class="history-list"
+      id="history-list"
+    >
+
+      <p
+        style="color:#6b7280;"
+      >
+        Loading...
+      </p>
+
+    </div>
+
+  </section>
+
+
+  <!-- Main JavaScript -->
+  <script src="/static/js/app.js"></script>
+
+
+  <script>
+
+    requireAuth();
+
+    document
+      .getElementById("greet-name")
+      .textContent =
+        getUsername() || "there";
+
+
+    const recentChecksButton =
+      document.getElementById("recent-checks-btn");
+
+    const recentChecksWrapper =
+      document.getElementById("recent-checks-wrapper");
+
+
+    recentChecksButton.addEventListener("click", async function () {
+
+      const isHidden =
+        recentChecksWrapper.hidden;
+
+
+      recentChecksWrapper.hidden =
+        !isHidden;
+
+
+      recentChecksButton.setAttribute(
+        "aria-expanded",
+        String(isHidden)
+      );
+
+
+      recentChecksButton.textContent =
+        isHidden
+          ? "Hide Recent Checks"
+          : "Recent Checks";
+
+
+      if (isHidden) {
+
+        await loadHistory();
+
+      }
+
+    });
+
+  </script>
+
+
+</body>
+
+</html>

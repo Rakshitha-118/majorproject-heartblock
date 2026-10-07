@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>ECG + Vitals Fusion Analysis — ECG Fusion</title>
+
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="/static/js/chart.umd.js"></script>
+</head>
+
+
+<body>
+
+  <!-- ======================================================
+       BACKGROUND
+  ======================================================= -->
+
+  <div class="bg-blobs">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+
+
+  <!-- ======================================================
+       NAVIGATION
+  ======================================================= -->
+
+  <nav>
+
+    <a href="/index.html" class="logo">
+      <span class="pulse-dot"></span>
+      ECG Fusion
+    </a>
+
+    <div class="links">
+
+      <a href="/dashboard.html">
+        &larr; Dashboard
+      </a>
+
+      <a href="#" onclick="logout()">
+        Log out
+      </a>
+
+    </div>
+
+  </nav>
+
+
+  <!-- ======================================================
+       MAIN SECTION
+  ======================================================= -->
+
+  <div
+    class="section"
+    style="padding-top:20px;"
+  >
+
+
+    <!-- ====================================================
+         PAGE HEADER
+    ===================================================== -->
+
+    <div class="form-header">
+
+      <h1>
+        ECG + Vitals Fusion Analysis
+      </h1>
+
+      <p>
+        Enter SpO₂, Heart Rate and Temperature in Celsius,
+        then upload your ECG signal file for fusion-model analysis.
+        Have a connected device? Use the Hardware page instead
+        to collect the vitals automatically.
+      </p>
+
+    </div>
+
+
+    <!-- ====================================================
+         FORM CARD
+    ===================================================== -->
+
+    <div class="form-card">
+
+
+      <form onsubmit="handleClinicalCheck(event)">
+
+
+        <div class="form-grid">
+
+
+          <!-- ==============================================
+               SpO2
+          =============================================== -->
+
+          <div class="field">
+
+            <label>
+              SpO₂ (%)
+            </label>
+
+            <input
+              type="number"
+              step="0.1"
+              name="spo2"
+              placeholder="e.g. 98"
+              min="0"
+              max="100"
+              required
+            >
+
+          </div>
+
+
+          <!-- ==============================================
+               HEART RATE
+          =============================================== -->
+
+          <div class="field">
+
+            <label>
+              Heart Rate (bpm)
+            </label>
+
+            <input
+              type="number"
+              step="1"
+              name="heart_rate"
+              placeholder="e.g. 75"
+              min="0"
+              required
+            >
+
+          </div>
+
+
+          <!-- ==============================================
+               TEMPERATURE - CELSIUS
+          =============================================== -->
+
+          <div class="field full">
+
+            <label>
+              Temperature (&deg;C)
+            </label>
+
+            <input
+              type="number"
+              step="0.1"
+              name="temperature"
+              placeholder="e.g. 37.0"
+              required
+            >
+
+          </div>
+
+
+          <!-- ==============================================
+               ECG SIGNAL FILE
+          =============================================== -->
+
+          <div class="field full">
+
+            <label>
+              ECG Signal File
+              (raw signal values — not a clinical CSV)
+            </label>
+
+
+            <label
+              for="ecg_file"
+              class="file-drop"
+              id="file-drop"
+            >
+
+
+              <input
+                type="file"
+                name="ecg_file"
+                id="ecg_file"
+                accept=".csv,.txt,.dat"
+                hidden
+              >
+
+
+              <!-- Upload Icon -->
+
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+              >
+
+                <path
+                  d="M12 16V4M12 4l-4 4M12 4l4 4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+
+                <path
+                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+
+              </svg>
+
+
+              <!-- Upload Instructions -->
+
+              <span class="file-drop-text">
+
+                <strong>
+                  Click to upload
+                </strong>
+
+                or drag and drop your ECG signal
+
+                <small>
+                  .csv, .txt, or .dat —
+                  one raw signal value per line or comma-separated,
+                  not clinical/tabular data
+                </small>
+
+              </span>
+
+
+              <!-- Selected File Name -->
+
+              <span
+                class="file-drop-name"
+                id="file-drop-name"
+              ></span>
+
+
+            </label>
+
+          </div>
+
+
+        </div>
+
+
+        <!-- ================================================
+             RUN ANALYSIS BUTTON
+        ================================================= -->
+
+        <button
+          type="submit"
+          class="btn btn-primary btn-block"
+          style="margin-top:20px;"
+        >
+          Run Fusion Analysis
+        </button>
+
+
+      </form>
+
+
+      <!-- ==================================================
+           RESULT
+      =================================================== -->
+
+      <div
+        id="result-box"
+        class="result-box"
+      ></div>
+
+
+    </div>
+
+  </div>
+
+
+  <!-- ======================================================
+       MAIN JAVASCRIPT
+  ======================================================= -->
+
+  <script src="/static/js/app.js"></script>
+
+
+  <!-- Authentication -->
+
+  <script>
+    requireAuth();
+  </script>
+
+
+  <!-- ======================================================
+       ECG FILE UPLOAD / DRAG AND DROP
+  ======================================================= -->
+
+  <script>
+
+    (function () {
+
+      const input =
+        document.getElementById(
+          "ecg_file"
+        );
+
+      const drop =
+        document.getElementById(
+          "file-drop"
+        );
+
+      const nameEl =
+        document.getElementById(
+          "file-drop-name"
+        );
+
+
+      // ----------------------------------------------------
+      // SHOW SELECTED FILE
+      // ----------------------------------------------------
+
+      function showFile(file) {
+
+        if (file) {
+
+          nameEl.textContent =
+            "📄 " + file.name;
+
+          drop.classList.add(
+            "has-file"
+          );
+
+        }
+
+        else {
+
+          nameEl.textContent = "";
+
+          drop.classList.remove(
+            "has-file"
+          );
+
+        }
+
+      }
+
+
+      // ----------------------------------------------------
+      // NORMAL FILE SELECTION
+      // ----------------------------------------------------
+
+      input.addEventListener(
+        "change",
+        () => {
+
+          showFile(
+            input.files[0]
+          );
+
+        }
+      );
+
+
+      // ----------------------------------------------------
+      // DRAG ENTER / DRAG OVER
+      // ----------------------------------------------------
+
+      [
+        "dragenter",
+        "dragover"
+
+      ].forEach(
+
+        (evt) =>
+
+          drop.addEventListener(
+
+            evt,
+
+            (e) => {
+
+              e.preventDefault();
+
+              drop.classList.add(
+                "dragging"
+              );
+
+            }
+
+          )
+
+      );
+
+
+      // ----------------------------------------------------
+      // DRAG LEAVE / DROP
+      // ----------------------------------------------------
+
+      [
+        "dragleave",
+        "drop"
+
+      ].forEach(
+
+        (evt) =>
+
+          drop.addEventListener(
+
+            evt,
+
+            (e) => {
+
+              e.preventDefault();
+
+              drop.classList.remove(
+                "dragging"
+              );
+
+            }
+
+          )
+
+      );
+
+
+      // ----------------------------------------------------
+      // FILE DROPPED
+      // ----------------------------------------------------
+
+      drop.addEventListener(
+
+        "drop",
+
+        (e) => {
+
+          const file =
+            e.dataTransfer.files[0];
+
+
+          if (file) {
+
+            input.files =
+              e.dataTransfer.files;
+
+            showFile(
+              file
+            );
+
+          }
+
+        }
+
+      );
+
+    })();
+
+  </script>
+
+
+</body>
+
+</html>

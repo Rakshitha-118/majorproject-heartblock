@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>ECG Fusion — AI Heart Health Check</title>
+
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+  <!-- ======================================================
+       BACKGROUND
+  ======================================================= -->
+
+  <div class="bg-blobs">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+
+
+  <!-- ======================================================
+       NAVBAR
+  ======================================================= -->
+
+  <nav>
+
+    <div class="logo">
+      <span class="pulse-dot"></span>
+      ECG Fusion
+    </div>
+
+    <div class="links">
+
+      <a href="/login.html">
+        Login
+      </a>
+
+      <a
+        href="/register.html"
+        class="btn btn-primary"
+        style="padding:9px 20px;"
+      >
+        Get Started
+      </a>
+
+    </div>
+
+  </nav>
+
+
+  <!-- ======================================================
+       HERO SECTION
+  ======================================================= -->
+
+  <section class="hero">
+
+    <div class="hero-text">
+
+      <h1>
+        AI-powered
+        <span>heart health</span>
+        checks, in seconds.
+      </h1>
+
+      <p>
+        Combining ECG signal analysis with Heart Rate,
+        Temperature and SpO₂ through a fusion deep learning
+        model to provide a Normal / Abnormal heart-health
+        assessment.
+      </p>
+
+
+      <div class="hero-actions">
+
+        <a
+          href="/register.html"
+          class="btn btn-primary"
+        >
+          Create free account
+        </a>
+
+        <a
+          href="/login.html"
+          class="btn btn-outline"
+        >
+          I already have an account
+        </a>
+
+      </div>
+
+    </div>
+
+
+    <!-- ====================================================
+         HERO VISUAL
+    ===================================================== -->
+
+    <div class="hero-visual">
+
+      <div class="pulse-card">
+
+        <div class="ecg-line-wrap">
+
+          <svg
+            viewBox="0 0 600 60"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+
+            <polyline
+              fill="none"
+              stroke="#ff5470"
+              stroke-width="2.5"
+              points="
+                0,30
+                40,30
+                55,10
+                70,50
+                85,30
+                130,30
+                145,15
+                155,45
+                165,30
+                300,30
+                340,30
+                355,10
+                370,50
+                385,30
+                430,30
+                445,15
+                455,45
+                465,30
+                600,30
+              "
+            />
+
+          </svg>
+
+        </div>
+
+
+        <h3
+          style="
+            margin-top:18px;
+            font-size:16px;
+          "
+        >
+          Two ways to check
+        </h3>
+
+
+        <p
+          style="
+            color:#6b7280;
+            font-size:13px;
+            margin-top:6px;
+          "
+        >
+          Collect vitals using connected hardware,
+          or enter the vitals manually.
+          Add an ECG signal for fusion-model analysis.
+        </p>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ======================================================
+       FEATURES
+  ======================================================= -->
+
+  <section class="section grid-3">
+
+
+    <!-- LIVE VITALS -->
+
+    <div class="option-card hw">
+
+      <div class="icon">
+
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+
+          <path
+            d="M2 12h4l2-7 4 14 2-7h4l2 7 2-7"
+            stroke="#2f6fed"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+
+        </svg>
+
+      </div>
+
+
+      <h3>
+        Live Vitals
+      </h3>
+
+      <p>
+        Collect Heart Rate, Temperature in °C and SpO₂
+        from the connected hardware and use them for
+        heart-health analysis.
+      </p>
+
+    </div>
+
+
+    <!-- ECG + VITALS -->
+
+    <div class="option-card data">
+
+      <div class="icon">
+
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+
+          <path
+            d="M12 21s-7.5-4.6-10-9.3C.5 8.1 2.4 4.5 6 4c2-.3 3.6.7 6 3.2C14.4 4.7 16 3.7 18 4c3.6.5 5.5 4.1 4 7.7C19.5 16.4 12 21 12 21z"
+            stroke="#e0527a"
+            stroke-width="2"
+            stroke-linejoin="round"
+          />
+
+        </svg>
+
+      </div>
+
+
+      <h3>
+        Vitals + ECG Fusion
+      </h3>
+
+      <p>
+        Heart Rate, Temperature and SpO₂ are combined
+        with the ECG signal and analyzed by the trained
+        fusion neural network.
+      </p>
+
+    </div>
+
+
+    <!-- HISTORY -->
+
+    <div class="option-card">
+
+      <div
+        class="icon"
+        style="background:#eafaf2;"
+      >
+
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+
+          <path
+            d="M4 20V10M10 20V4M16 20v-7M22 20V8"
+            stroke="#1fa971"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+
+        </svg>
+
+      </div>
+
+
+      <h3>
+        Track History
+      </h3>
+
+      <p>
+        Every completed check is saved to your account
+        so you can review previous results.
+      </p>
+
+    </div>
+
+  </section>
+
+
+  <!-- ======================================================
+       HOW IT WORKS
+  ======================================================= -->
+
+  <section
+    class="section how-section"
+    id="how-it-works"
+  >
+
+    <span
+      class="eyebrow"
+      style="
+        display:block;
+        text-align:center;
+      "
+    >
+      How it works
+    </span>
+
+
+    <h2
+      style="
+        text-align:center;
+        margin-bottom:36px;
+      "
+    >
+      Three steps, start to finish
+    </h2>
+
+
+    <div class="how-grid">
+
+
+      <!-- STEP 1 -->
+
+      <div class="how-step">
+
+        <div class="how-num">
+          1
+        </div>
+
+        <h3>
+          Create an account
+        </h3>
+
+        <p>
+          Register with a username and email,
+          then log in. Your completed checks
+          and history stay connected to your account.
+        </p>
+
+      </div>
+
+
+      <!-- STEP 2 -->
+
+      <div class="how-step">
+
+        <div class="how-num">
+          2
+        </div>
+
+        <h3>
+          Provide your data
+        </h3>
+
+        <p>
+          Collect Heart Rate, Temperature and SpO₂
+          from the hardware or enter them manually,
+          then add a raw ECG signal file for fusion analysis.
+        </p>
+
+      </div>
+
+
+      <!-- STEP 3 -->
+
+      <div class="how-step">
+
+        <div class="how-num">
+          3
+        </div>
+
+        <h3>
+          Get your result
+        </h3>
+
+        <p>
+          The trained fusion model analyzes the ECG
+          signal together with the three vital features
+          and returns a Normal / Abnormal result.
+        </p>
+
+      </div>
+
+
+    </div>
+
+  </section>
+
+
+  <!-- ======================================================
+       REQUIREMENTS
+  ======================================================= -->
+
+  <section
+    class="section requirements-section"
+    id="requirements"
+  >
+
+    <span
+      class="eyebrow"
+      style="
+        display:block;
+        text-align:center;
+      "
+    >
+      Before you start
+    </span>
+
+
+    <h2
+      style="
+        text-align:center;
+        margin-bottom:36px;
+      "
+    >
+      What you'll need for each check
+    </h2>
+
+
+    <div class="how-grid">
+
+
+      <!-- HARDWARE -->
+
+      <div class="how-step">
+
+        <h3>
+          For a Hardware check
+        </h3>
+
+        <p>
+          Connect the Arduino to collect Heart Rate,
+          Temperature in °C and SpO₂ automatically.
+          You can then add your ECG signal and run
+          the fusion analysis.
+        </p>
+
+      </div>
+
+
+      <!-- MANUAL -->
+
+      <div class="how-step">
+
+        <h3>
+          For a Manual check
+        </h3>
+
+        <p>
+          Enter Heart Rate (bpm), Temperature (°C)
+          and SpO₂ (%) manually, then upload a raw
+          ECG signal file for analysis.
+        </p>
+
+      </div>
+
+
+      <!-- ECG -->
+
+      <div class="how-step">
+
+        <h3>
+          ECG Signal
+        </h3>
+
+        <p>
+          Use a raw ECG signal file in CSV, TXT or DAT
+          format containing numeric signal values.
+          Clinical/tabular CSV files should not be uploaded
+          as ECG signals.
+        </p>
+
+      </div>
+
+
+    </div>
+
+  </section>
+
+
+  <!-- ======================================================
+       FAQ
+  ======================================================= -->
+
+  <section
+    class="section faq-section"
+    id="faq"
+  >
+
+    <span
+      class="eyebrow"
+      style="
+        display:block;
+        text-align:center;
+      "
+    >
+      FAQ
+    </span>
+
+
+    <h2
+      style="
+        text-align:center;
+        margin-bottom:36px;
+      "
+    >
+      Common questions
+    </h2>
+
+
+    <div class="faq-list">
+
+
+      <!-- FAQ 1 -->
+
+      <details class="faq-item">
+
+        <summary>
+          Is ECG Fusion a real diagnostic tool?
+        </summary>
+
+        <p>
+          No. This application demonstrates a fusion
+          deep learning system for heart-health analysis.
+          Its output is not a medical diagnosis.
+          Consult a qualified healthcare professional
+          for medical concerns.
+        </p>
+
+      </details>
+
+
+      <!-- FAQ 2 -->
+
+      <details class="faq-item">
+
+        <summary>
+          What data does the model use?
+        </summary>
+
+        <p>
+          The clinical/vitals branch uses three features:
+          Heart Rate, Temperature in Celsius and SpO₂.
+          These features are combined with ECG signal
+          features by the fusion model.
+        </p>
+
+      </details>
+
+
+      <!-- FAQ 3 -->
+
+      <details class="faq-item">
+
+        <summary>
+          What's the difference between Hardware and Enter Data?
+        </summary>
+
+        <p>
+          The Hardware page collects the three vital
+          readings automatically from the connected device.
+          The Enter Data page lets you provide the same
+          values manually. Both can be combined with an
+          ECG signal for fusion analysis.
+        </p>
+
+      </details>
+
+
+      <!-- FAQ 4 -->
+
+      <details class="faq-item">
+
+        <summary>
+          What format should my ECG file be in?
+        </summary>
+
+        <p>
+          Upload a CSV, TXT or DAT file containing raw
+          numeric ECG signal values separated by commas
+          or new lines. The backend uses 250 Hz as the
+          default sampling rate unless another sampling
+          rate is provided.
+        </p>
+
+      </details>
+
+
+      <!-- FAQ 5 -->
+
+      <details class="faq-item">
+
+        <summary>
+          Can I see my past checks?
+        </summary>
+
+        <p>
+          Yes. Completed checks are stored in your
+          account and displayed under Recent checks
+          on the dashboard.
+        </p>
+
+      </details>
+
+
+      <!-- FAQ 6 -->
+
+      <details class="faq-item">
+
+        <summary>
+          Is my data private?
+        </summary>
+
+        <p>
+          Account information and check history are
+          stored within the application database.
+          Avoid entering sensitive real-world medical
+          information when using the system for
+          demonstration or academic purposes.
+        </p>
+
+      </details>
+
+
+    </div>
+
+  </section>
+
+
+  <!-- ======================================================
+       FOOTER
+  ======================================================= -->
+
+  <footer>
+
+    <div class="footer-inner">
+
+      <div class="footer-brand">
+
+        <div class="logo">
+          <span class="pulse-dot"></span>
+          ECG Fusion
+        </div>
+
+      </div>
+
+
+      <div class="footer-links">
+
+        <a href="#how-it-works">
+          How it works
+        </a>
+
+        <a href="#faq">
+          FAQ
+        </a>
+
+        <a href="/register.html">
+          Get started
+        </a>
+
+        <a href="/login.html">
+          Login
+        </a>
+
+      </div>
+
+    </div>
+
+  </footer>
+
+
+</body>
+
+</html>

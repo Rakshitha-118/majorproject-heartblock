@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Model Results — ECG Fusion</title>
+
+  <link
+    rel="stylesheet"
+    href="/static/css/style.css"
+  >
+
+
+  <style>
+
+    /* ======================================================
+       RESULTS PAGE
+    ====================================================== */
+
+    .results-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px 48px 60px;
+    }
+
+
+    /* ======================================================
+       TABS
+    ====================================================== */
+
+    .model-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .model-tab {
+      flex: 1;
+      text-align: center;
+      padding: 14px 18px;
+
+      border-radius: 14px;
+      border: 1px solid var(--border);
+
+      background: #fff;
+
+      cursor: pointer;
+
+      font-weight: 700;
+      color: var(--text-muted);
+
+      transition: all .2s ease;
+    }
+
+    .model-tab.active {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: #eef4ff;
+    }
+
+
+    /* ======================================================
+       PANELS
+    ====================================================== */
+
+    .model-panel {
+      display: none;
+    }
+
+    .model-panel.active {
+      display: block;
+    }
+
+
+    /* ======================================================
+       GRID
+    ====================================================== */
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+
+    @media (max-width: 800px) {
+
+      .results-wrap {
+        padding: 20px 20px 60px;
+      }
+
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+
+    }
+
+
+    /* ======================================================
+       RESULT CARDS
+    ====================================================== */
+
+    .result-card {
+
+      background: #fff;
+
+      border: 1px solid var(--border);
+
+      border-radius: 18px;
+
+      padding: 24px;
+
+      box-shadow: var(--shadow);
+    }
+
+
+    .result-card h3 {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+
+    .result-card .sub {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+
+    /* ======================================================
+       METRICS
+    ====================================================== */
+
+    .metric-row {
+
+      display: flex;
+
+      gap: 12px;
+
+      flex-wrap: wrap;
+
+      margin-top: 16px;
+    }
+
+
+    .metric-pill {
+
+      background: #f7f9fd;
+
+      border: 1px solid var(--border);
+
+      border-radius: 12px;
+
+      padding: 10px 16px;
+
+      flex: 1;
+
+      min-width: 100px;
+
+      text-align: center;
+    }
+
+
+    .metric-pill strong {
+
+      display: block;
+
+      font-size: 19px;
+
+      color: var(--primary);
+    }
+
+
+    .metric-pill span {
+
+      font-size: 11.5px;
+
+      color: var(--text-muted);
+    }
+
+
+    /* ======================================================
+       CONFUSION MATRIX
+    ====================================================== */
+
+    .cm-table {
+
+      width: 100%;
+
+      border-collapse: collapse;
+
+      text-align: center;
+    }
+
+
+    .cm-table th {
+
+      font-size: 12px;
+
+      color: var(--text-muted);
+
+      font-weight: 600;
+
+      padding: 6px;
+    }
+
+
+    .cm-table td {
+
+      font-size: 22px;
+
+      font-weight: 800;
+
+      padding: 22px 10px;
+
+      border-radius: 10px;
+
+      color: #fff;
+    }
+
+
+    .cm-table .axis-label {
+
+      font-size: 11px;
+
+      color: var(--text-muted);
+
+      font-weight: 600;
+    }
+
+
+    /* ======================================================
+       INFORMATION BOX
+    ====================================================== */
+
+    .model-info {
+
+      background: #eef4ff;
+
+      border: 1px solid #cbdcff;
+
+      color: #374151;
+
+      border-radius: 12px;
+
+      padding: 14px 18px;
+
+      font-size: 13px;
+
+      margin-bottom: 24px;
+    }
+
+
+    /* ======================================================
+       EMPTY RESULT
+    ====================================================== */
+
+    .not-available {
+
+      text-align: center;
+
+      padding: 30px 20px;
+
+      color: #6b7280;
+
+      background: #f8fafc;
+
+      border-radius: 12px;
+
+      border: 1px dashed #d1d5db;
+    }
+
+
+    /* ======================================================
+       TABLE
+    ====================================================== */
+
+    .prediction-table {
+
+      width: 100%;
+
+      border-collapse: collapse;
+
+      font-size: 14px;
+    }
+
+
+    .prediction-table th {
+
+      text-align: left;
+
+      padding: 10px 8px;
+
+      color: var(--text-muted);
+
+      font-size: 12px;
+
+      border-bottom: 1px solid var(--border);
+    }
+
+
+    .prediction-table td {
+
+      padding: 10px 8px;
+
+      border-bottom: 1px solid #f1f3f6;
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+
+  <!-- ======================================================
+       BACKGROUND
+  ====================================================== -->
+
+  <div class="bg-blobs">
+
+    <div class="blob b1"></div>
+
+    <div class="blob b2"></div>
+
+    <div class="blob b3"></div>
+
+  </div>
+
+
+
+  <!-- ======================================================
+       NAVBAR
+  ====================================================== -->
+
+  <nav>
+
+
+    <a
+      href="/index.html"
+      class="logo"
+    >
+
+      <span class="pulse-dot"></span>
+
+      ECG Fusion
+
+    </a>
+
+
+    <div class="links">
+
+
+      <a href="/dashboard.html">
+
+        Dashboard
+
+      </a>
+
+
+      <a
+        href="#"
+        onclick="logout()"
+      >
+
+        Log out
+
+      </a>
+
+
+    </div>
+
+
+  </nav>
+
+
+
+  <!-- ======================================================
+       PAGE HEADING
+  ====================================================== -->
+
+  <div class="dash-greeting">
+
+
+    <h1 class="greet-line">
+
+      Model Results
+
+    </h1>
+
+
+    <p>
+
+      Performance of the ECG + Vitals fusion model using
+      Heart Rate, Temperature (°C), SpO₂ and ECG signal input.
+
+    </p>
+
+
+  </div>
+
+
+
+  <!-- ======================================================
+       RESULTS
+  ====================================================== -->
+
+  <div class="results-wrap">
+
+
+    <!-- MODEL INFORMATION -->
+
+    <div class="model-info">
+
+      <strong>Fusion Model Input:</strong>
+
+      ECG Signal +
+
+      Heart Rate (bpm) +
+
+      Temperature (°C) +
+
+      SpO₂ (%)
+
+      <br><br>
+
+      <strong>Model Output:</strong>
+
+      Normal / Abnormal
+
+    </div>
+
+
+
+    <!-- ====================================================
+         TABS
+    ===================================================== -->
+
+    <div class="model-tabs">
+
+
+      <div
+        class="model-tab active"
+        data-model="performance"
+      >
+
+        Model Performance
+
+      </div>
+
+
+      <div
+        class="model-tab"
+        data-model="samples"
+      >
+
+        Prediction Samples
+
+      </div>
+
+
+    </div>
+
+
+
+    <!-- ====================================================
+         PERFORMANCE PANEL
+    ===================================================== -->
+
+    <div
+      id="panel-performance"
+      class="model-panel active"
+    >
+
+
+      <div class="results-grid">
+
+
+        <!-- CONFUSION MATRIX -->
+
+        <div class="result-card">
+
+
+          <h3>
+
+            Confusion Matrix
+
+          </h3>
+
+
+          <div class="sub">
+
+            Evaluation of Normal and Abnormal predictions
+
+          </div>
+
+
+          <div
+            id="confusion-container"
+            class="not-available"
+          >
+
+            Current model evaluation values
+            will be displayed here after verification.
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- METRICS -->
+
+        <div class="result-card">
+
+
+          <h3>
+
+            Summary Metrics
+
+          </h3>
+
+
+          <div class="sub">
+
+            Performance of the trained fusion model
+
+          </div>
+
+
+          <div
+            id="metrics-container"
+            class="not-available"
+          >
+
+            Accuracy, Precision, Recall and F1 Score
+            will be displayed here after the current
+            model results are verified.
+
+          </div>
+
+
+        </div>
+
+
+      </div>
+
+
+      <!-- ==================================================
+           MODEL DESCRIPTION
+      =================================================== -->
+
+      <div class="result-card">
+
+
+        <h3>
+
+          Current Fusion Model
+
+        </h3>
+
+
+        <div class="sub">
+
+          Inputs used by the deployed model
+
+        </div>
+
+
+        <div class="metric-row">
+
+
+          <div class="metric-pill">
+
+            <strong>
+
+              ECG
+
+            </strong>
+
+            <span>
+
+              ECG Signal
+
+            </span>
+
+          </div>
+
+
+
+          <div class="metric-pill">
+
+            <strong>
+
+              BPM
+
+            </strong>
+
+            <span>
+
+              Heart Rate
+
+            </span>
+
+          </div>
+
+
+
+          <div class="metric-pill">
+
+            <strong>
+
+              °C
+
+            </strong>
+
+            <span>
+
+              Temperature
+
+            </span>
+
+          </div>
+
+
+
+          <div class="metric-pill">
+
+            <strong>
+
+              %
+
+            </strong>
+
+            <span>
+
+              SpO₂
+
+            </span>
+
+          </div>
+
+
+        </div>
+
+
+      </div>
+
+
+    </div>
+
+
+
+    <!-- ====================================================
+         SAMPLE PREDICTIONS PANEL
+    ===================================================== -->
+
+    <div
+      id="panel-samples"
+      class="model-panel"
+    >
+
+
+      <div
+        class="results-grid"
+        style="grid-template-columns:1fr;"
+      >
+
+
+        <div class="result-card">
+
+
+          <h3>
+
+            Fusion Model Prediction Samples
+
+          </h3>
+
+
+          <div class="sub">
+
+            Test-set predictions from the current fusion model
+
+          </div>
+
+
+          <div
+            id="sample-container"
+            class="not-available"
+          >
+
+            Current model sample predictions
+            will be displayed here after verification.
+
+          </div>
+
+
+        </div>
+
+
+      </div>
+
+
+    </div>
+
+
+  </div>
+
+
+
+  <!-- ======================================================
+       MAIN JAVASCRIPT
+  ====================================================== -->
+
+  <script src="/static/js/app.js"></script>
+
+
+
+  <script>
+
+
+    // ======================================================
+    // REQUIRE LOGIN
+    // ======================================================
+
+    requireAuth();
+
+
+
+    /*
+    =========================================================
+
+    IMPORTANT
+
+    We are intentionally NOT putting the old values here:
+
+        Accuracy  = 90%
+        Precision = 90%
+        Recall    = 90%
+        F1        = 90%
+
+        Confusion Matrix:
+        9  1
+        1  9
+
+    Those values should only be displayed if they are
+    confirmed to belong to the CURRENT fusion_model.pth.
+
+    =========================================================
+    */
+
+
+
+    // ======================================================
+    // CURRENT MODEL RESULTS
+    // ======================================================
+
+    const MODEL_RESULTS = null;
+
+
+
+    // ======================================================
+    // CURRENT MODEL SAMPLE PREDICTIONS
+    // ======================================================
+
+    const MODEL_SAMPLES = [];
+
+
+
+    // ======================================================
+    // DISPLAY MODEL PERFORMANCE
+    // ======================================================
+
+    function displayModelPerformance() {
+
+
+      if (!MODEL_RESULTS) {
+
+        return;
+
+      }
+
+
+      const confusionContainer =
+        document.getElementById(
+          "confusion-container"
+        );
+
+
+      const metricsContainer =
+        document.getElementById(
+          "metrics-container"
+        );
+
+
+
+      confusionContainer.classList.remove(
+        "not-available"
+      );
+
+
+      metricsContainer.classList.remove(
+        "not-available"
+      );
+
+
+
+      confusionContainer.innerHTML = `
+
+
+        <table class="cm-table">
+
+
+          <tr>
+
+            <td></td>
+
+            <th>
+
+              Predicted: Normal
+
+            </th>
+
+            <th>
+
+              Predicted: Abnormal
+
+            </th>
+
+          </tr>
+
+
+
+          <tr>
+
+
+            <th
+              class="axis-label"
+              style="
+                text-align:right;
+                padding-right:10px;
+              "
+            >
+
+              Actual: Normal
+
+            </th>
+
+
+            <td style="background:#1fb571;">
+
+              ${MODEL_RESULTS.confusion.normalCorrect}
+
+            </td>
+
+
+            <td style="background:#ff8fa3;">
+
+              ${MODEL_RESULTS.confusion.normalWrong}
+
+            </td>
+
+
+          </tr>
+
+
+
+          <tr>
+
+
+            <th
+              class="axis-label"
+              style="
+                text-align:right;
+                padding-right:10px;
+              "
+            >
+
+              Actual: Abnormal
+
+            </th>
+
+
+            <td style="background:#ff8fa3;">
+
+              ${MODEL_RESULTS.confusion.abnormalWrong}
+
+            </td>
+
+
+            <td style="background:#1fb571;">
+
+              ${MODEL_RESULTS.confusion.abnormalCorrect}
+
+            </td>
+
+
+          </tr>
+
+
+        </table>
+
+      `;
+
+
+
+      metricsContainer.innerHTML = `
+
+
+        <div class="metric-row">
+
+
+          <div class="metric-pill">
+
+            <strong>
+
+              ${MODEL_RESULTS.metrics.accuracy}
+
+            </strong>
+
+            <span>
+
+              Accuracy
+
+            </span>
+
+          </div>
+
+
+
+          <div class="metric-pill">
+
+            <strong>
+
+              ${MODEL_RESULTS.metrics.precision}
+
+            </strong>
+
+            <span>
+
+              Precision
+
+            </span>
+
+          </div>
+
+
+        </div>
+
+
+
+        <div class="metric-row">
+
+
+          <div class="metric-pill">
+
+            <strong>
+
+              ${MODEL_RESULTS.metrics.recall}
+
+            </strong>
+
+            <span>
+
+              Recall
+
+            </span>
+
+          </div>
+
+
+
+          <div class="metric-pill">
+
+            <strong>
+
+              ${MODEL_RESULTS.metrics.f1}
+
+            </strong>
+
+            <span>
+
+              F1 Score
+
+            </span>
+
+          </div>
+
+
+        </div>
+
+      `;
+
+
+    }
+
+
+
+    // ======================================================
+    // DISPLAY SAMPLE PREDICTIONS
+    // ======================================================
+
+    function displaySamplePredictions() {
+
+
+      if (
+        !MODEL_SAMPLES ||
+        MODEL_SAMPLES.length === 0
+      ) {
+
+        return;
+
+      }
+
+
+      const container =
+        document.getElementById(
+          "sample-container"
+        );
+
+
+      container.classList.remove(
+        "not-available"
+      );
+
+
+
+      const rows =
+        MODEL_SAMPLES.map(
+
+          (sample) => `
+
+
+            <tr>
+
+
+              <td>
+
+                Sample ${sample.sample}
+
+              </td>
+
+
+              <td>
+
+
+                <strong
+                  style="
+                    color:
+                    ${
+                      sample.label === "Abnormal"
+
+                      ? "#e0445b"
+
+                      : "#1fb571"
+                    };
+                  "
+                >
+
+                  ${sample.label}
+
+                </strong>
+
+
+              </td>
+
+
+              <td>
+
+                ${(sample.confidence * 100).toFixed(1)}%
+
+              </td>
+
+
+            </tr>
+
+
+          `
+
+        ).join("");
+
+
+
+      container.innerHTML = `
+
+
+        <table class="prediction-table">
+
+
+          <tr>
+
+
+            <th>
+
+              Test Sample
+
+            </th>
+
+
+            <th>
+
+              Prediction
+
+            </th>
+
+
+            <th>
+
+              Confidence
+
+            </th>
+
+
+          </tr>
+
+
+          ${rows}
+
+
+        </table>
+
+      `;
+
+
+    }
+
+
+
+    // ======================================================
+    // LOAD RESULTS
+    // ======================================================
+
+    displayModelPerformance();
+
+    displaySamplePredictions();
+
+
+
+    // ======================================================
+    // TAB SWITCHING
+    // ======================================================
+
+    document
+      .querySelectorAll(
+        ".model-tab"
+      )
+      .forEach(
+
+        (tab) => {
+
+
+          tab.addEventListener(
+
+            "click",
+
+            () => {
+
+
+              document
+                .querySelectorAll(
+                  ".model-tab"
+                )
+                .forEach(
+
+                  (item) => {
+
+                    item.classList.remove(
+                      "active"
+                    );
+
+                  }
+
+                );
+
+
+
+              document
+                .querySelectorAll(
+                  ".model-panel"
+                )
+                .forEach(
+
+                  (panel) => {
+
+                    panel.classList.remove(
+                      "active"
+                    );
+
+                  }
+
+                );
+
+
+
+              tab.classList.add(
+                "active"
+              );
+
+
+
+              const panel =
+                document.getElementById(
+
+                  "panel-" +
+                  tab.dataset.model
+
+                );
+
+
+              if (panel) {
+
+                panel.classList.add(
+                  "active"
+                );
+
+              }
+
+
+            }
+
+          );
+
+
+        }
+
+      );
+
+
+  </script>
+
+
+</body>
+
+</html>

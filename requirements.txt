@@ -1,0 +1,14 @@
+fastapi==0.141.1
+uvicorn==0.34.0
+sqlalchemy==2.0.36
+itsdangerous==2.2.0
+python-multipart==0.0.20
+pydantic[email]==2.10.4
+torch==2.5.1
+scikit-learn==1.6.1
+joblib==1.4.2
+numpy==1.26.4
+scipy==1.14.1
+neurokit2==0.2.10
+pyserial>=3.5
+openpyxl>=3.1
