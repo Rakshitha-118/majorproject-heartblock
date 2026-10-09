@@ -429,3 +429,105 @@
     usage();
   }
 })();
+
+
+// ---------------------------------------------------------------------
+// Dashboard visuals — built ONLY from assessments saved on this device
+// (nothing invented; empty states are shown when there is no data).
+// ---------------------------------------------------------------------
+(function () {
+  "use strict";
+  if (document.body.dataset.page !== "dashboard" || !window.CardioStore) return;
+  var S = window.CardioStore;
+  function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  var h = S.history();
+  var latest = h.filter(function (r) { return r.vitals && (r.vitals.heart_rate != null || r.vitals.spo2 != null || r.vitals.temperature != null); })[0];
+
+  // Vitals tiles
+  var vp = document.getElementById("vitals-panel");
+  if (vp) {
+    var v = latest ? latest.vitals : {};
+    function tile(cls, label, val, unit, icon, extra) {
+      return '<div class="vtile ' + cls + '"><div class="vi">' + icon + (cls === "hr" ? '<span class="ring"></span><span class="ring r2"></span>' : "") + '</div><div class="vt"><span class="vl">' + label + '</span><strong>' + (val == null ? "&mdash;" : esc(val)) + '<em>' + (val == null ? "" : unit) + '</em></strong></div>' + (extra || "") + '</div>';
+    }
+    var MINI = '<svg class="mini" viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" points="0,24 20,24 26,24 30,8 36,38 42,24 80,24 90,18 100,24 120,24 126,24 130,8 136,38 142,24 180,24 190,18 200,24 220,24 226,24 230,8 236,38 242,24 280,24 290,18 300,24 320,24 326,24 330,8 336,38 342,24 380,24 390,18 400,24"/></svg>';
+    function gauge(pct) { return '<svg class="gauge" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15.5" class="g-bg"/><circle cx="18" cy="18" r="15.5" class="g-fg" pathLength="100" stroke-dasharray="' + Math.max(0, Math.min(100, pct)) + ' 100"/></svg>'; }
+    var svg = function (d) { return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; };
+    vp.innerHTML =
+      tile("hr", "Heart rate", v.heart_rate, " bpm", svg('<path d="M12 21s-7.5-4.6-10-9.3C.5 8.1 2.4 4.5 6 4c2-.3 3.6.7 6 3.2C14.4 4.7 16 3.7 18 4c3.6.5 5.5 4.1 4 7.7C19.5 16.4 12 21 12 21z"/>'), v.heart_rate != null ? MINI : "") +
+      tile("sp", "SpO₂", v.spo2, " %", svg('<path d="M12 3s6 6.2 6 10.5A6 6 0 016 13.5C6 9.2 12 3 12 3z"/>'), v.spo2 != null ? gauge(v.spo2) : "") +
+      tile("tp", "Temperature", v.temperature, " °C", svg('<path d="M14 14.8V5a2 2 0 00-4 0v9.8a4 4 0 104 0z"/>'));
+    document.getElementById("vit-when").textContent = latest ? new Date(latest.ts).toLocaleString() : "No saved vitals yet";
+    if (!latest) vp.insertAdjacentHTML("afterend", '<p class="rp-muted vit-empty">Vitals appear here after your next assessment is saved on this device.</p>');
+  }
+
+  // Beat speed follows the latest saved real heart rate (clamped for comfort)
+  var hero = document.getElementById("dash-hero");
+  if (hero) {
+    var hr = latest && latest.vitals.heart_rate;
+    if (hr) {
+      var bpm = Math.min(180, Math.max(40, hr));
+      hero.style.setProperty("--beat", (60 / bpm).toFixed(2) + "s");
+      document.getElementById("hm-bpm").textContent = hr + " bpm";
+    }
+  }
+
+  // Heart-rate trend (sparkline from saved assessments)
+  var tp = document.getElementById("trend-panel");
+  if (tp) {
+    var pts = h.filter(function (r) { return r.vitals && r.vitals.heart_rate != null; }).slice(0, 12).reverse();
+    if (pts.length < 2) {
+      tp.innerHTML = '<p class="rp-muted">Save at least two assessments to see a heart-rate trend here.</p>';
+    } else {
+      var vals = pts.map(function (r) { return r.vitals.heart_rate; }), w = 360, ht = 120, pad = 14;
+      var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals), rg = (max - min) || 1;
+      var xy = vals.map(function (x, i) { return [pad + i / (vals.length - 1) * (w - 2 * pad), ht - pad - (x - min) / rg * (ht - 2 * pad)]; });
+      var line = xy.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ");
+      var area = pad + "," + (ht - pad) + " " + line + " " + (w - pad) + "," + (ht - pad);
+      tp.innerHTML = '<svg viewBox="0 0 ' + w + " " + ht + '" class="spark" role="img" aria-label="Heart rate across your last ' + vals.length + ' saved assessments"><polygon points="' + area + '" class="sp-area"/><polyline points="' + line + '" class="sp-line" fill="none"/>' +
+        xy.map(function (p, i) { return '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3.5" class="sp-dot"><title>' + vals[i] + " bpm</title></circle>"; }).join("") + '</svg>' +
+        '<div class="spark-meta"><span>Min <b>' + min + '</b></span><span>Latest <b>' + vals[vals.length - 1] + '</b> bpm</span><span>Max <b>' + max + '</b></span></div>';
+    }
+  }
+})();
+
+
+// Dashboard: risk distribution donut + last-7-days strip (saved assessments only)
+(function () {
+  "use strict";
+  if (document.body.dataset.page !== "dashboard" || !window.CardioStore) return;
+  var h = window.CardioStore.history();
+  var cls = function (v) { var t = String(v || "").toLowerCase(); return (t === "low" || t === "medium" || t === "high") ? t : null; };
+
+  var dp = document.getElementById("donut-panel");
+  if (dp) {
+    var n = { low: 0, medium: 0, high: 0 };
+    h.forEach(function (r) { var k = cls(r.overall); if (k) n[k]++; });
+    var total = n.low + n.medium + n.high;
+    if (!total) {
+      dp.innerHTML = '<p class="rp-muted">Your risk breakdown appears here once assessments are saved on this device.</p>';
+    } else {
+      var segs = [["low", "Low", "#138a5b"], ["medium", "Medium", "#e0a000"], ["high", "High", "#c62828"]], off = 0, arcs = "";
+      segs.forEach(function (s) {
+        var pct = n[s[0]] / total * 100;
+        if (pct > 0) arcs += '<circle cx="21" cy="21" r="15.9155" fill="none" stroke="' + s[2] + '" stroke-width="5" stroke-dasharray="' + pct.toFixed(2) + ' ' + (100 - pct).toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 21 21)"/>';
+        off += pct;
+      });
+      dp.innerHTML = '<div class="donut-wrap"><svg viewBox="0 0 42 42" class="donut" role="img" aria-label="Risk distribution of ' + total + ' saved assessments"><circle cx="21" cy="21" r="15.9155" fill="none" class="d-track" stroke-width="5"/>' + arcs + '</svg><div class="d-center"><strong>' + total + '</strong><span>assessments</span></div></div>' +
+        '<ul class="d-legend">' + segs.map(function (s) { return '<li><i style="background:' + s[2] + '"></i>' + s[1] + '<b>' + n[s[0]] + '</b></li>'; }).join("") + '</ul>';
+    }
+  }
+
+  var wp = document.getElementById("week-panel");
+  if (wp) {
+    var days = [], today = new Date(); today.setHours(0, 0, 0, 0);
+    for (var i = 6; i >= 0; i--) { var d = new Date(today); d.setDate(today.getDate() - i); days.push(d); }
+    var key = function (d) { return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); };
+    var counts = {}; h.forEach(function (r) { var d = new Date(r.ts); if (!isNaN(d)) counts[key(d)] = (counts[key(d)] || 0) + 1; });
+    var week = days.reduce(function (a, d) { return a + (counts[key(d)] || 0); }, 0);
+    wp.innerHTML = '<div class="week-strip">' + days.map(function (d, i) {
+      var c = counts[key(d)] || 0;
+      return '<div class="wd' + (c ? " has" : "") + (i === 6 ? " today" : "") + '"><span>' + d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 3) + '</span><b>' + d.getDate() + '</b><i>' + (c || "") + '</i></div>';
+    }).join("") + '</div><p class="rp-muted week-sum">' + (week ? week + " assessment" + (week === 1 ? "" : "s") + " in the last 7 days" : "No assessments saved in the last 7 days") + '</p>';
+  }
+})();

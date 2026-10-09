@@ -42,12 +42,23 @@
     </header>
     <main class="app-content" id="main">
 
-      <div class="page-hero">
-        <div class="dash-greeting" style="margin:0;">
+      <div class="page-hero" id="dash-hero">
+        <div class="hero-copy dash-greeting" style="margin:0;">
+          <span class="hero-eyebrow">Cardiovascular risk screening</span>
           <h2>Hi, <span id="greet-name"></span></h2>
           <p>Choose how you would like to run a heart-health risk assessment today.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary hero-btn" href="/hardware.html">Start sensor assessment</a>
+            <a class="btn hero-btn-ghost" href="/enter-data.html">Enter data manually</a>
+          </div>
         </div>
-        <svg class="greet-pulse" width="110" height="40" viewBox="0 0 140 40" aria-hidden="true"><polyline points="0,20 30,20 38,4 46,34 54,20 90,20 98,8 106,32 114,20 140,20" fill="none" stroke="#4aa3ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="hero-monitor" aria-hidden="true">
+          <div class="hm-top">
+            <svg class="beat-heart" width="34" height="34" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.1 2.4 4.5 6 4c2-.3 3.6.7 6 3.2C14.4 4.7 16 3.7 18 4c3.6.5 5.5 4.1 4 7.7C19.5 16.4 12 21 12 21z" fill="#ff5470"/></svg>
+            <div><strong id="hm-bpm">&mdash;</strong><small id="hm-label">Illustration &middot; pulse speed follows your latest saved heart rate</small></div>
+          </div>
+          <div class="hm-ecg"><svg viewBox="0 0 600 120" preserveAspectRatio="none"><polyline fill="none" stroke="#4aa3ff" stroke-width="2.6" stroke-linejoin="round" points="0,70 60,70 75,70 85,28 95,104 105,70 170,70 190,58 210,70 280,70 300,70 310,28 320,104 330,70 400,70 420,58 440,70 510,70 530,70 540,28 550,104 560,70 600,70"/></svg></div>
+        </div>
       </div>
 
       <div class="section-head"><h2>Latest assessment</h2><span id="latest-when"></span></div>
@@ -58,31 +69,56 @@
         <div class="stat-card unknown"><div class="k">Assessments saved</div><div class="v">&mdash;</div><div class="s">&nbsp;</div></div>
       </div>
 
-      <div class="section-head"><h2>Start an assessment</h2><span>Both routes use the same fusion model</span></div>
-      <section class="section grid-2">
+      <div class="dash-grid">
 
-        <a href="/hardware.html" class="option-card hw">
-          <div class="icon icon-pulse">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9.5" stroke="#1565c0" stroke-width="1.4" opacity="0.35"/><path d="M3 12h3.2l1.6-4.5L11.2 17l2.2-9 1.6 4h3" stroke="#1565c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <section class="g g-4">
+          <div class="section-head"><h2>Latest vitals</h2><span id="vit-when">This device</span></div>
+          <div class="vitals-panel" id="vitals-panel"></div>
+        </section>
+
+        <section class="g g-4">
+          <div class="section-head"><h2>Start an assessment</h2><span>Same fusion model</span></div>
+          <div class="start-stack">
+            <a href="/hardware.html" class="option-card hw">
+              <div class="icon icon-pulse">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9.5" stroke="#1565c0" stroke-width="1.4" opacity="0.35"/><path d="M3 12h3.2l1.6-4.5L11.2 17l2.2-9 1.6 4h3" stroke="#1565c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <span class="badge">Quick &middot; ~10 sec</span>
+              <h3>Sensor Assessment</h3>
+              <p>Read SpO&#8322;, Heart Rate and Temperature from the connected device for a quick health check.</p>
+            </a>
+            <a href="/enter-data.html" class="option-card data">
+              <div class="icon icon-fusion">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 20.5s-7.2-4.4-9.6-9C1 8 2.7 4.7 6 4.2c1.9-.3 3.4.6 6 3 2.6-2.4 4.1-3.3 6-3 3.3.5 5 3.8 3.6 7.3-2.4 4.6-9.6 9-9.6 9z" stroke="#0e8f9a" stroke-width="1.6" stroke-linejoin="round"/><circle cx="7" cy="9" r="1.3" fill="#0e8f9a"/><circle cx="17" cy="9" r="1.3" fill="#0e8f9a"/><circle cx="12" cy="15" r="1.3" fill="#0e8f9a"/><path d="M7 9l5 6 5-6" stroke="#0e8f9a" stroke-width="1.2" stroke-linecap="round"/></svg>
+              </div>
+              <span class="badge">Fusion Analysis</span>
+              <h3>Manual Assessment</h3>
+              <p>Enter SpO&#8322;, Heart Rate and Temperature, then upload an ECG signal for fusion-model analysis.</p>
+            </a>
           </div>
-          <span class="badge">Quick &middot; ~10 sec</span>
-          <h3>Sensor Assessment</h3>
-          <p>Read SpO&#8322;, Heart Rate and Temperature from the connected device for a quick health check.</p>
-        </a>
+        </section>
 
-        <a href="/enter-data.html" class="option-card data">
-          <div class="icon icon-fusion">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 20.5s-7.2-4.4-9.6-9C1 8 2.7 4.7 6 4.2c1.9-.3 3.4.6 6 3 2.6-2.4 4.1-3.3 6-3 3.3.5 5 3.8 3.6 7.3-2.4 4.6-9.6 9-9.6 9z" stroke="#0e8f9a" stroke-width="1.6" stroke-linejoin="round"/><circle cx="7" cy="9" r="1.3" fill="#0e8f9a"/><circle cx="17" cy="9" r="1.3" fill="#0e8f9a"/><circle cx="12" cy="15" r="1.3" fill="#0e8f9a"/><path d="M7 9l5 6 5-6" stroke="#0e8f9a" stroke-width="1.2" stroke-linecap="round"/></svg>
-          </div>
-          <span class="badge">Fusion Analysis</span>
-          <h3>Manual Assessment</h3>
-          <p>Enter SpO&#8322;, Heart Rate and Temperature, then upload an ECG signal for fusion-model analysis.</p>
-        </a>
+        <section class="g g-4">
+          <div class="section-head"><h2>Risk distribution</h2><span>Saved assessments</span></div>
+          <div class="donut-panel" id="donut-panel"></div>
+        </section>
 
-      </section>
+        <section class="g g-8">
+          <div class="section-head"><h2>Heart-rate trend</h2><span>Saved assessments</span></div>
+          <div class="trend-panel" id="trend-panel"></div>
+        </section>
 
-      <div class="section-head"><h2>Saved on this device</h2><a class="link-btn" href="/history.html">View all history &rarr;</a></div>
-      <div class="local-widget" id="local-widget" aria-live="polite"></div>
+        <section class="g g-4">
+          <div class="section-head"><h2>Last 7 days</h2><span>Assessments per day</span></div>
+          <div class="week-panel" id="week-panel"></div>
+        </section>
+
+        <section class="g g-12">
+          <div class="section-head"><h2>Saved on this device</h2><a class="link-btn" href="/history.html">View all history &rarr;</a></div>
+          <div class="local-widget" id="local-widget" aria-live="polite"></div>
+        </section>
+
+      </div>
 
       <button type="button" id="recent-checks-btn" class="recent-checks-btn" aria-expanded="false" aria-controls="recent-checks-wrapper">Recent Checks</button>
 
